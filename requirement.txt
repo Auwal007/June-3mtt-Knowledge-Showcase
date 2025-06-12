@@ -1,3 +1,7 @@
-pip install git+https://github.com/openai/whisper.git
-pip install transformers sentencepiece ffmpeg-python
-pip install torchaudio numpy tqdm
+Flask
+ffmpeg-python
+openai-whisper
+torch
+requests
+transformers
+google-generativeai

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Subtitler</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Video Subtitler</h1>
+            <p>Automatically generate and burn translated subtitles into any video.</p>
+        </header>
+
+        <main class="main-content">
+            <div class="card">
+                <!-- Step 1: Upload -->
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h2>Upload Video</h2>
+                        <p>Choose an MP4 file from your device.</p>
+                        <input type="file" id="video-upload" accept="video/mp4">
+                        <label for="video-upload" class="upload-label">
+                            <span id="file-name">Click to select a file...</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: Select Language -->
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h2>Select Language</h2>
+                        <p>Choose the target language for the subtitles.</p>
+                        <select id="language-select">
+                            <option value="Hausa">Hausa</option>
+                            <option value="Igbo">Igbo</option>
+                            <option value="Yoruba">Yoruba</option>
+                            <option value="English">English (Regenerate)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 3: Generate -->
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h2>Generate</h2>
+                        <p>Start the process. This may take a few minutes.</p>
+                        <button id="generate-btn">Generate Subtitled Video</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress and Results Section -->
+            <div id="results-section" class="results-card hidden">
+                <h2>Processing Your Video...</h2>
+                <div id="status-message">Please wait. The AI models are at work!</div>
+                <div class="loader hidden" id="loader"></div>
+
+                <div id="video-container" class="hidden">
+                    <h3>🎉 Success! Your Video is Ready.</h3>
+                    <video id="result-video" controls></video>
+                    <a id="download-link" href="#" download="subtitled_video.mp4" class="download-btn">
+                        Download Video
+                    </a>
+                </div>
+                <div id="error-message" class="error-text hidden"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript File -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
