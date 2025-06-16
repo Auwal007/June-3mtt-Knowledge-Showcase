@@ -1,7 +1,8 @@
-Flask
-ffmpeg-python
-openai-whisper
+
 torch
 requests
 transformers
-google-generativeai
+Flask==3.1.1
+ffmpeg-python==0.2.0
+openai-whisper==20230918
+python-dotenv==1.0.1
