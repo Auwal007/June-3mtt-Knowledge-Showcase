@@ -6,6 +6,8 @@ output
 extracted_audio
 
 
+runtime.txt
+
 appp.py
 
 # Byte-compiled / optimized / DLL files

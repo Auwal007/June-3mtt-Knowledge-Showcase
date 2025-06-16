@@ -1,8 +1,16 @@
 
-torch
+# torch
+# requests
+# transformers
+# Flask==3.1.1
+# ffmpeg-python==0.2.0
+# openai-whisper==20230918
+# python-dotenv==1.0.1
+
+Flask==3.1.1
 requests
 transformers
-Flask==3.1.1
 ffmpeg-python==0.2.0
-openai-whisper==20230918
-python-dotenv==1.0.1
+whisper  # Use the standard 'whisper' package
+gunicorn # Essential for running Flask in production on Render
+python-dotenv # Used for loading environment variables locally
