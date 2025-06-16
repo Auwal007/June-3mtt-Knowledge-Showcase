@@ -13,7 +13,7 @@ services:
     buildCommand: |
       # Install Python dependencies listed in requirements.txt
       pip install -r requirements.txt
-      # Pre-download the Whisper 'base' model during the build process.
+      # Pre-download the Whisper 'medium' model during the build process.
       # This avoids downloading it on every app startup and ensures it's cached.
       python -c "import whisper; whisper.load_model('medium'); print('Whisper model downloaded during build.')"
 
