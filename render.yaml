@@ -6,16 +6,16 @@ services:
     name: video-subtitler-flask # A unique, descriptive name for your service
     env: python # Specifies the Python runtime environment
     region: oregon # Choose a region closer to your users for better performance (e.g., 'frankfurt', 'london', 'ohio')
-    pythonVersion: 3.10 # <--- ADD THIS LINE: Pin Python version to 3.10 for better compatibility
+    pythonVersion: 3.10 # <--- THIS LINE MUST BE HERE, AT THE SAME INDENTATION AS 'env' and 'region'
 
     # buildCommand specifies the commands to run when building your application.
     # Render's Python environment usually has `pip` and basic build tools.
     buildCommand: |
       # Install Python dependencies listed in requirements.txt
       pip install -r requirements.txt
-      # Pre-download the Whisper 'medium' model during the build process.
+      # Pre-download the Whisper 'base' model during the build process.
       # This avoids downloading it on every app startup and ensures it's cached.
-      python -c "import whisper; whisper.load_model('medium'); print('Whisper model downloaded during build.')"
+      python -c "import whisper; whisper.load_model('base'); print('Whisper model downloaded during build.')"
 
     # startCommand specifies how to run your application after it's built.
     # Gunicorn is a popular WSGI HTTP server for Flask in production.
