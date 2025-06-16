@@ -6,6 +6,7 @@ services:
     name: video-subtitler-flask # A unique, descriptive name for your service
     env: python # Specifies the Python runtime environment
     region: oregon # Choose a region closer to your users for better performance (e.g., 'frankfurt', 'london', 'ohio')
+    pythonVersion: 3.10 # <--- ADD THIS LINE: Pin Python version to 3.10 for better compatibility
 
     # buildCommand specifies the commands to run when building your application.
     # Render's Python environment usually has `pip` and basic build tools.
