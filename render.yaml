@@ -1,0 +1,49 @@
+# render.yaml
+# This file defines the infrastructure for your Flask application on Render.
+
+services:
+  - type: web # Defines this service as a web server (HTTP accessible)
+    name: video-subtitler-flask # A unique, descriptive name for your service
+    env: python # Specifies the Python runtime environment
+    region: oregon # Choose a region closer to your users for better performance (e.g., 'frankfurt', 'london', 'ohio')
+
+    # buildCommand specifies the commands to run when building your application.
+    # Render's Python environment usually has `pip` and basic build tools.
+    buildCommand: |
+      # Install Python dependencies listed in requirements.txt
+      pip install -r requirements.txt
+      # Pre-download the Whisper 'base' model during the build process.
+      # This avoids downloading it on every app startup and ensures it's cached.
+      python -c "import whisper; whisper.load_model('medium'); print('Whisper model downloaded during build.')"
+
+    # startCommand specifies how to run your application after it's built.
+    # Gunicorn is a popular WSGI HTTP server for Flask in production.
+    # It binds to 0.0.0.0 and uses the $PORT environment variable provided by Render.
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
+
+    # healthCheckPath is used by Render to determine if your service is healthy.
+    # The root path '/' is usually sufficient for a basic Flask app.
+    healthCheckPath: /
+
+    # envVars define environment variables available to your application.
+    envVars:
+      - key: OPENROUTER_API_KEY
+        # IMPORTANT SECURITY NOTE:
+        # Do NOT paste your actual API key value directly here in render.yaml.
+        # Instead, go to your Render Dashboard -> your service -> 'Environment' tab.
+        # Add a new environment variable named OPENROUTER_API_KEY and paste its true value there.
+        # Render securely manages these secrets.
+      - key: PERSISTENT_STORAGE_ROOT
+        # This environment variable will be used by your Flask app to define
+        # where persistent files (inputs, outputs, logs, etc.) are stored.
+        # It matches the 'mountPath' of the disk below.
+        value: /var/data
+
+    # disk defines a persistent storage volume for your service.
+    # This is CRUCIAL because Render's default filesystem is ephemeral, meaning
+    # any files written to it will be lost on restarts or redeployments.
+    disk:
+      name: app-persistent-storage # A unique name for your disk
+      mountPath: /var/data # The directory inside your container where this disk will be mounted.
+                          # Your Flask app's file operations should use paths under this mountPath
+                          # to ensure data persistence.
