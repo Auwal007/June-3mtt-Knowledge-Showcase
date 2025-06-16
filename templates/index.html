@@ -31,24 +31,45 @@
                     </div>
                 </div>
 
-                <!-- Step 2: Select Language -->
+                <!-- Step 2: Select Source Language (NEW) -->
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h2>Select Language</h2>
-                        <p>Choose the target language for the subtitles.</p>
-                        <select id="language-select">
+                        <h2>Select Source Language</h2>
+                        <p>What language is spoken in the video?</p>
+                        <select id="source-language-select">
+                            <option value="auto">Auto-Detect</option>
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
                             <option value="Hausa">Hausa</option>
                             <option value="Igbo">Igbo</option>
                             <option value="Yoruba">Yoruba</option>
-                            <option value="English">English (Regenerate)</option>
+                            <!-- Add other common languages as needed -->
                         </select>
                     </div>
                 </div>
 
-                <!-- Step 3: Generate -->
+
+                <!-- Step 3: Select Target Language -->
                 <div class="step">
                     <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h2>Select Target Language</h2>
+                        <p>Choose the language for the final subtitles.</p>
+                        <select id="target-language-select">
+                            <option value="Hausa">Hausa</option>
+                            <option value="Igbo">Igbo</option>
+                            <option value="Yoruba">Yoruba</option>
+                            <option value="English">English</option>
+                             <!-- Add other target languages as needed -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 4: Generate -->
+                <div class="step">
+                    <div class="step-number">4</div>
                     <div class="step-content">
                         <h2>Generate</h2>
                         <p>Start the process. This may take a few minutes.</p>

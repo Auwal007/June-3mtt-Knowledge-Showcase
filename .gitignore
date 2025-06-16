@@ -1,3 +1,10 @@
+transcripts
+subs
+input
+logs
+output
+extracted_audio
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

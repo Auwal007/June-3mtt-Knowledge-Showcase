@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get references to all the important HTML elements
     const videoUpload = document.getElementById('video-upload');
     const fileNameDisplay = document.getElementById('file-name');
-    const languageSelect = document.getElementById('language-select');
+    // **CHANGE**: Get references to the new source and renamed target language selectors
+    const sourceLanguageSelect = document.getElementById('source-language-select');
+    const targetLanguageSelect = document.getElementById('target-language-select');
     const generateBtn = document.getElementById('generate-btn');
     const resultsSection = document.getElementById('results-section');
     const statusMessage = document.getElementById('status-message');
@@ -28,7 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle the click event for the generate button
     generateBtn.addEventListener('click', async () => {
         if (!selectedFile) {
-            alert('Please select a video file first!');
+            // **FIX**: Use a custom modal or a less intrusive notification instead of alert()
+            // For this example, we'll keep it simple, but in a real app, a modal is better.
+            statusMessage.textContent = 'Please select a video file first!';
+            resultsSection.classList.remove('hidden');
+            setTimeout(() => {
+                resultsSection.classList.add('hidden');
+            }, 3000);
             return;
         }
 
@@ -41,10 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.remove('hidden');
         statusMessage.textContent = 'Uploading video...';
 
-        // --- Create a FormData object to send the file and language ---
+        // --- Create a FormData object to send the file and languages ---
         const formData = new FormData();
         formData.append('video', selectedFile);
-        formData.append('language', languageSelect.value);
+        // **CHANGE**: Append both source and target languages
+        formData.append('source_language', sourceLanguageSelect.value);
+        formData.append('target_language', targetLanguageSelect.value);
+
 
         try {
             // --- Make the API call to the Flask backend ---
