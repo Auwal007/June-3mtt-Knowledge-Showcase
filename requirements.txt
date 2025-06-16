@@ -1,6 +1,8 @@
+
 Flask==3.1.1
+requests
+transformers
 ffmpeg-python==0.2.0
-torch==2.7.1
-transformers==4.52.4
-requests==2.32.4
-whisper
+openai-whisper # Use the OpenAI Whisper library
+gunicorn
+python-dotenv
