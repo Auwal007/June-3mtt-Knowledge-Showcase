@@ -18,7 +18,7 @@
 ---
 
 ## 🌐 Project Live Demo  
-https://ai-subtitler-app.up.railway.app/
+https://june-3mtt-knowledge-showcase.onrender.com/
 
 ---
 
@@ -57,7 +57,7 @@ The diagram below illustrates the full AI-powered video processing workflow used
 
 ## 🌐 Project Live Demo  
 
-https://ai-subtitler-app.up.railway.app/
+https://june-3mtt-knowledge-showcase.onrender.com/
 
 ---
 
