@@ -55,6 +55,11 @@ The diagram below illustrates the full AI-powered video processing workflow used
 
 ---
 
+## 🌐 Project Live Demo  
+
+https://ai-subtitler-app.up.railway.app/
+
+---
 
 The goal is to provide an efficient tool for **content creators, educators, and businesses** to enhance video accessibility and global understanding.
 
