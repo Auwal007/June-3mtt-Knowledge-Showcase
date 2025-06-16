@@ -1,18 +1,6 @@
-
-# torch
-# requests
-# transformers
-# Flask==3.1.1
-# ffmpeg-python==0.2.0
-# openai-whisper==20230918
-# python-dotenv==1.0.1
-
 Flask==3.1.1
-requests
-transformers
 ffmpeg-python==0.2.0
-
-openai-whisper @ https://github.com/linto-ai/whisper-timestamped/archive/refs/tags/v1.15.0.post0.tar.gz
-
-gunicorn # Essential for running Flask in production on Render
-python-dotenv # Used for loading environment variables locally
+torch==2.7.1
+transformers==4.52.4
+requests==2.32.4
+whisper-timestamped==1.15.8
