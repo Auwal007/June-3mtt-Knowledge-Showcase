@@ -42,6 +42,20 @@ This **Flask-based web application** automates video subtitling and translation.
 - **SRT subtitle** file generation  
 - Subtitle burning into the video  
 
+
+---
+
+## 🧭 Project Pipeline Overview
+
+The diagram below illustrates the full AI-powered video processing workflow used in this project:
+
+![AI Video Subtitler Pipeline](image/flow.png)
+
+> From audio extraction and transcription to multi-language translation and final subtitle burning, each stage is powered by open-source tools and AI models.
+
+---
+
+
 The goal is to provide an efficient tool for **content creators, educators, and businesses** to enhance video accessibility and global understanding.
 
 ---
