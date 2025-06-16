@@ -51,7 +51,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # --- AI Model Loading ---
 def load_whisper_model():
     """Loads the Whisper model."""
-    model = whisper.load_model("base")
+    model = whisper.load_model("medium")
     logging.info("Whisper model loaded.")
     return model
 
