@@ -2,7 +2,7 @@ import os
 import sys
 import ffmpeg
 import whisper
-import google.generativeai as genai
+import requests # Import the requests library for OpenRouter API calls
 from flask import Flask, request, render_template, jsonify, send_from_directory
 import logging
 from datetime import timedelta, datetime
@@ -17,15 +17,12 @@ load_dotenv()
 # --- Basic Setup ---
 app = Flask(__name__)
 
-# --- Get Gemini API Key ---
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("ERROR: Gemini API key not found.")
-    print("Please set the GEMINI_API_KEY environment variable.")
+# --- Get OpenRouter API Key ---
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    print("ERROR: OpenRouter API key not found.")
+    print("Please set the OPENROUTER_API_KEY environment variable.")
     sys.exit(1)
-
-# Configure the Gemini client
-genai.configure(api_key=GEMINI_API_KEY)
 
 # --- Configure Folder Paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,11 +38,12 @@ os.makedirs(SUBS_DIR, exist_ok=True)
 os.makedirs(EXTRACTED_AUDIO_DIR, exist_ok=True)
 os.makedirs(TRANSCRIPTS_DIR, exist_ok=True)
 
-GEMINI_LOG_DIR = os.path.join(BASE_DIR, "logs", "gemini_requests")
-os.makedirs(GEMINI_LOG_DIR, exist_ok=True)
+# New logging directories for OpenRouter
+OPENROUTER_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_requests")
+os.makedirs(OPENROUTER_LOG_DIR, exist_ok=True)
 
-GEMINI_ERROR_LOG_DIR = os.path.join(BASE_DIR, "logs", "gemini_errors")
-os.makedirs(GEMINI_ERROR_LOG_DIR, exist_ok=True)
+OPENROUTER_ERROR_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_errors")
+os.makedirs(OPENROUTER_ERROR_LOG_DIR, exist_ok=True)
 
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -59,7 +57,6 @@ def load_whisper_model():
 
 # Pre-load models on startup
 WHISPER_MODEL = load_whisper_model()
-GEMINI_MODEL = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
 
 # --- Helper Functions (The Pipeline) ---
 
@@ -121,14 +118,12 @@ def save_transcription(segments, output_path):
         logging.error(f"Error saving transcription file: {e}")
         return False
 
-# --- MODIFICATION START ---
-# This new function translates the entire script in a single API call.
-def translate_full_transcript_via_gemini(segments, src_lang, tgt_lang):
+def translate_full_transcript_via_openrouter(segments, src_lang, tgt_lang):
     """
-    Translates the full transcript in a single Gemini API call,
+    Translates the full transcript using a single OpenRouter AI API call,
     then re-maps the translations to the original timestamps.
     """
-    logging.info(f"Translating full transcript from '{src_lang}' to '{tgt_lang}' using a single Gemini API call...")
+    logging.info(f"Translating full transcript from '{src_lang}' to '{tgt_lang}' using OpenRouter AI...")
     
     # Use a unique, unlikely separator to split segments.
     separator = "|||SEGMENT_BREAK|||"
@@ -149,8 +144,30 @@ def translate_full_transcript_via_gemini(segments, src_lang, tgt_lang):
             f"Original text:\n\"{full_transcript}\""
         )
         
-        response = GEMINI_MODEL.generate_content(prompt)
-        full_translation = response.text.strip()
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            # Optional: Add HTTP-Referer and X-Title for OpenRouter's leaderboards/tracking
+            #"HTTP-Referer": "https://your-app-domain.com", # Replace with your actual app domain
+            #"X-Title": "Video Subtitler App", # Replace with your app name
+        }
+        
+        payload = {
+            "model": "deepseek/deepseek-r1-0528:free", # You can choose another OpenRouter-supported model here
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+        response = requests.post(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+        
+        response_json = response.json()
+        full_translation = response_json['choices'][0]['message']['content'].strip()
         
         # Split the single translated string back into individual segments.
         translated_texts = full_translation.split(separator)
@@ -163,7 +180,7 @@ def translate_full_transcript_via_gemini(segments, src_lang, tgt_lang):
             return segments # Fallback to original untranslated segments
 
         # --- SUCCESS LOGGING ---
-        log_gemini_request(request_id, "success", prompt, full_translation, segments)
+        log_openrouter_request(request_id, "success", prompt, full_translation, segments)
 
         # Re-map the translated texts back to the original segment data (with timestamps).
         translated_segments = []
@@ -177,13 +194,22 @@ def translate_full_transcript_via_gemini(segments, src_lang, tgt_lang):
         logging.info("Full transcript translation complete and re-mapped to timestamps.")
         return translated_segments
 
+    except requests.exceptions.RequestException as e:
+        logging.error(f"OpenRouter API call failed for the full transcript. Network or API error: {e}")
+        log_openrouter_request(request_id, "error", prompt, str(e), segments)
+        return segments # Fallback to original untranslated segments
+    except KeyError:
+        logging.error(f"OpenRouter API response structure unexpected. No 'choices' or 'message' found. Response: {response_json}")
+        log_openrouter_request(request_id, "error", prompt, json.dumps(response_json), segments)
+        return segments # Fallback to original untranslated segments
     except Exception as e:
-        logging.error(f"Gemini API call failed for the full transcript. See error log for details: {e}")
-        log_gemini_request(request_id, "error", prompt, str(e), segments)
+        logging.error(f"An unexpected error occurred during OpenRouter API call: {e}")
+        log_openrouter_request(request_id, "error", prompt, str(e), segments)
         return segments # Fallback to original untranslated segments
 
-def log_gemini_request(request_id, status, prompt, response_text, original_segments):
-    """Logs the details of a Gemini API request."""
+
+def log_openrouter_request(request_id, status, prompt, response_text, original_segments):
+    """Logs the details of an OpenRouter API request."""
     log_data = {
         "id": request_id,
         "status": status,
@@ -192,7 +218,7 @@ def log_gemini_request(request_id, status, prompt, response_text, original_segme
         "response_received": response_text,
         "original_segment_count": len(original_segments),
     }
-    log_dir = GEMINI_LOG_DIR if status == "success" else GEMINI_ERROR_LOG_DIR
+    log_dir = OPENROUTER_LOG_DIR if status == "success" else OPENROUTER_ERROR_LOG_DIR
     log_filename = f"{request_id}_{status}.json"
     log_path = os.path.join(log_dir, log_filename)
     with open(log_path, "w", encoding="utf-8") as f:
@@ -202,7 +228,7 @@ def log_mismatch_error(request_id, prompt, response_text, original_segments):
     """Logs a specific error for when segment counts do not match."""
     error_details = {
         "error_type": "SegmentCountMismatch",
-        "message": "The number of segments returned by Gemini did not match the number of segments sent.",
+        "message": "The number of segments returned by OpenRouter did not match the number of segments sent.",
         "original_segment_count": len(original_segments),
         "translated_segment_count": len(response_text.split("|||SEGMENT_BREAK|||"))
     }
@@ -214,10 +240,9 @@ def log_mismatch_error(request_id, prompt, response_text, original_segments):
         "response_received": response_text,
         "error_details": error_details
     }
-    log_path = os.path.join(GEMINI_ERROR_LOG_DIR, f"{request_id}_mismatch_error.json")
+    log_path = os.path.join(OPENROUTER_ERROR_LOG_DIR, f"{request_id}_mismatch_error.json")
     with open(log_path, "w", encoding="utf-8") as f:
         json.dump(log_data, f, ensure_ascii=False, indent=4)
-# --- MODIFICATION END ---
 
 def format_time(seconds):
     """Formats seconds into SRT time format (HH:MM:SS,ms)."""
@@ -318,9 +343,8 @@ def process_video_route():
 
     save_transcription(transcribed_segments, transcription_path)
     
-    # --- MODIFICATION ---
-    # Call the new single-request translation function
-    translated_segments = translate_full_transcript_via_gemini(transcribed_segments, actual_source_language, target_language)
+    # Call the new OpenRouter translation function
+    translated_segments = translate_full_transcript_via_openrouter(transcribed_segments, actual_source_language, target_language)
     if not translated_segments:
         # The function now includes a fallback, but we check again in case of total failure
         return jsonify({"error": "Failed to translate text."}), 500
@@ -338,3 +362,4 @@ def process_video_route():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

@@ -49,7 +49,7 @@ This **Flask-based web application** automates video subtitling and translation.
 
 The diagram below illustrates the full AI-powered video processing workflow used in this project:
 
-![AI Video Subtitler Pipeline](image/flow.png)
+![AI Video Subtitler Pipeline](image/flow.jpg)
 
 > From audio extraction and transcription to multi-language translation and final subtitle burning, each stage is powered by open-source tools and AI models.
 

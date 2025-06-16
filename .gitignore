@@ -5,6 +5,9 @@ logs
 output
 extracted_audio
 
+
+appp.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
