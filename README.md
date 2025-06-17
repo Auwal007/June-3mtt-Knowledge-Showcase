@@ -17,10 +17,7 @@
 
 ---
 
-## 🌐 Project Live Demo  
-https://june-3mtt-knowledge-showcase.onrender.com/
 
----
 
 ## 🎯 3MTT Knowledge Showcase (June Edition) Context  
 This project is submitted under the **AI-Powered Solutions** category for the **3MTT Knowledge Showcase – June Edition**. It demonstrates AI's use in solving real-world problems by:
@@ -55,11 +52,6 @@ The diagram below illustrates the full AI-powered video processing workflow used
 
 ---
 
-## 🌐 Project Live Demo  
-
-https://june-3mtt-knowledge-showcase.onrender.com/
-
----
 
 The goal is to provide an efficient tool for **content creators, educators, and businesses** to enhance video accessibility and global understanding.
 
@@ -109,6 +101,8 @@ Video content faces language barriers and accessibility issues. AI offers a powe
 
 ## 🚀 How to Run the Flask Application
 
+>Unfortunately, I was not able to deploy the application online for web use due to the limited computing resources of free hosting services, which cannot accommodate the tool. I also cannot afford paid hosting at the moment. However, you can run the application on your local computer.
+
 ### 1. Clone the Repository
 
 ```bash
@@ -117,6 +111,9 @@ cd June-3mtt-Knowledge
 ```
 
 ### 2. Create Virtual Environment
+
+
+
 
 ```bash
 python -m venv venv
