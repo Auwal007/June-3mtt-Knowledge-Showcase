@@ -1,8 +1,22 @@
 
 Flask==3.1.1
 requests
-transformers
 ffmpeg-python==0.2.0
-openai-whisper # Use the OpenAI Whisper library
 gunicorn
 python-dotenv
+# CPU-only PyTorch (much smaller than default CUDA version)
+--index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision 
+torchaudio
+# Install transformers and whisper after PyTorch
+transformers
+openai-whisper
+
+# Flask==3.1.1
+# requests
+# transformers
+# ffmpeg-python==0.2.0
+# openai-whisper # Use the OpenAI Whisper library
+# gunicorn
+# python-dotenv
