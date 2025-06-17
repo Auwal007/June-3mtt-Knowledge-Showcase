@@ -7,9 +7,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /app
+# Create non-root user
+RUN groupadd --gid 1000 appuser \
+    && useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
 
-# Install only essential system dependencies
+# Install system dependencies as root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
@@ -18,28 +20,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/*
 
+# Switch to non-root user
+USER appuser
+WORKDIR /home/appuser/app
+
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 
 # Install Python packages with size optimizations
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
+RUN pip install --user --no-cache-dir --upgrade pip && \
+    pip install --user --no-cache-dir \
     Flask==3.1.1 \
     requests \
     ffmpeg-python==0.2.0 \
     gunicorn \
     python-dotenv && \
     # Install PyTorch CPU-only version (much smaller than CUDA version)
-    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --user --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
     # Install transformers and whisper
-    pip install --no-cache-dir transformers openai-whisper && \
-    # Clean up pip cache and temporary files
-    pip cache purge && \
-    find /usr/local -name '*.pyc' -delete && \
-    find /usr/local -name '__pycache__' -delete
+    pip install --user --no-cache-dir transformers openai-whisper
+
+# Add user's pip bin to PATH
+ENV PATH="/home/appuser/.local/bin:$PATH"
 
 # Copy application code
-COPY . .
+COPY --chown=appuser:appuser . .
 
 # Create necessary directories
 RUN mkdir -p input output subs extracted_audio transcripts logs/openrouter_requests logs/openrouter_errors
@@ -52,5 +57,5 @@ RUN find . -name "*.pyc" -delete && \
 # Expose port (Railway uses PORT environment variable)
 EXPOSE $PORT
 
-# Use Railway's PORT environment variable
-CMD gunicorn --bind 0.0.0.0:$PORT --timeout 300 --workers 1 --max-requests 100 --max-requests-jitter 10 app:app
+# Use Railway's PORT environment variable with optimized settings for accuracy/performance balance  
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 600 --workers 1 --max-requests 50 --preload app:app
