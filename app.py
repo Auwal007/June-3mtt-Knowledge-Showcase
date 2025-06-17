@@ -11,7 +11,7 @@ import subprocess
 from dotenv import load_dotenv
 import uuid
 import json
-
+import torch
 load_dotenv()
 
 # --- Basic Setup ---
@@ -49,10 +49,35 @@ os.makedirs(OPENROUTER_ERROR_LOG_DIR, exist_ok=True)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- AI Model Loading ---
+# def load_whisper_model():
+#     """Loads the Whisper model."""
+#     model = whisper.load_model("base")  # You can change to "base", "medium", or "large" as needed
+#     logging.info("Whisper model loaded.")
+#     return model
+
+
+# import torch
+
 def load_whisper_model():
-    """Loads the Whisper model."""
-    model = whisper.load_model("base")  # You can change to "base", "medium", or "large" as needed
-    logging.info("Whisper model loaded.")
+    """Loads the Whisper model with CPU optimizations for Railway."""
+    logging.info("Loading Whisper model for CPU processing...")
+    
+    # Force CPU mode and disable CUDA
+    torch.set_default_tensor_type('torch.FloatTensor')
+    
+    # Load model with CPU-specific optimizations
+    model = whisper.load_model(
+        "base",  # Good balance of accuracy vs speed
+        device="cpu",  # Explicitly set CPU
+        download_root=None,  # Use default cache
+        in_memory=True  # Keep model in memory for faster subsequent calls
+    )
+    
+    # Additional CPU optimizations
+    if hasattr(torch, 'set_num_threads'):
+        torch.set_num_threads(2)  # Limit threads for Railway's environment
+    
+    logging.info("Whisper model loaded successfully with CPU optimizations.")
     return model
 
 # Pre-load models on startup
@@ -78,14 +103,52 @@ def extract_audio(video_path, output_audio_path):
         logging.error(e.stderr.decode('utf8'))
         return False
 
+# def transcribe_audio(audio_path, language_code=None):
+#     """
+#     Transcribes audio using Whisper.
+#     Returns the transcribed segments and the detected language.
+#     """
+#     logging.info(f"Transcribing {audio_path}...")
+#     try:
+#         transcribe_options = {'task': 'transcribe', 'verbose': False}
+
+#         if language_code and language_code.lower() != 'auto':
+#             logging.info(f"User specified source language: {language_code}")
+#             transcribe_options['language'] = language_code.lower()
+#         else:
+#             logging.info("Auto-detecting source language.")
+
+#         result = WHISPER_MODEL.transcribe(audio_path, **transcribe_options)
+
+#         detected_language = result['language']
+#         segments = result['segments']
+
+#         logging.info(f"Transcription complete. Language confirmed as: {detected_language}")
+#         return segments, detected_language
+
+#     except Exception as e:
+#         logging.error(f"Error during transcription: {e}")
+#         return None, None
+
+
 def transcribe_audio(audio_path, language_code=None):
     """
-    Transcribes audio using Whisper.
+    Transcribes audio using Whisper with CPU optimizations.
     Returns the transcribed segments and the detected language.
     """
     logging.info(f"Transcribing {audio_path}...")
     try:
-        transcribe_options = {'task': 'transcribe', 'verbose': False}
+        # CPU-optimized transcription options
+        transcribe_options = {
+            'task': 'transcribe', 
+            'verbose': False,
+            'fp16': False,  # CRITICAL: Disable FP16 for CPU processing
+            'condition_on_previous_text': False,  # Reduce memory usage
+            'temperature': 0,  # More deterministic results
+            'best_of': 1,  # Reduce computation
+            'beam_size': 1,  # Faster processing
+            'patience': 1.0,  # Reduce waiting time
+        }
 
         if language_code and language_code.lower() != 'auto':
             logging.info(f"User specified source language: {language_code}")
@@ -93,12 +156,15 @@ def transcribe_audio(audio_path, language_code=None):
         else:
             logging.info("Auto-detecting source language.")
 
+        # Add progress logging
+        logging.info("Starting Whisper transcription with CPU optimizations...")
         result = WHISPER_MODEL.transcribe(audio_path, **transcribe_options)
 
         detected_language = result['language']
         segments = result['segments']
 
         logging.info(f"Transcription complete. Language confirmed as: {detected_language}")
+        logging.info(f"Generated {len(segments)} segments")
         return segments, detected_language
 
     except Exception as e:
