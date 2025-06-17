@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.git
+*.log
+*.zip
+node_modules
+venv
+*.mp4
+*.wav
+*.srt
+*.txt
