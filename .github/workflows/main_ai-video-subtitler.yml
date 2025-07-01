@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AZURE_WEBAPP_NAME: video-subtitler-app    # Change this to your app name
   AZURE_WEBAPP_PACKAGE_PATH: '.'           # Path to your application code
