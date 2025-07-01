@@ -26,11 +26,22 @@ if not OPENROUTER_API_KEY:
 
 # --- Configure Folder Paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INPUT_DIR = os.path.join(BASE_DIR, "input")
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-SUBS_DIR = os.path.join(BASE_DIR, "subs")
-EXTRACTED_AUDIO_DIR = os.path.join(BASE_DIR, "extracted_audio")
-TRANSCRIPTS_DIR = os.path.join(BASE_DIR, "transcripts")
+
+# Azure App Service specific path handling
+if os.environ.get('WEBSITE_SITE_NAME'):  # Running on Azure
+    # Use /tmp for temporary files on Azure App Service
+    TEMP_BASE = '/tmp'
+    INPUT_DIR = os.path.join(TEMP_BASE, "input")
+    OUTPUT_DIR = os.path.join(TEMP_BASE, "output")
+    SUBS_DIR = os.path.join(TEMP_BASE, "subs")
+    EXTRACTED_AUDIO_DIR = os.path.join(TEMP_BASE, "extracted_audio")
+    TRANSCRIPTS_DIR = os.path.join(TEMP_BASE, "transcripts")
+else:  # Running locally
+    INPUT_DIR = os.path.join(BASE_DIR, "input")
+    OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+    SUBS_DIR = os.path.join(BASE_DIR, "subs")
+    EXTRACTED_AUDIO_DIR = os.path.join(BASE_DIR, "extracted_audio")
+    TRANSCRIPTS_DIR = os.path.join(BASE_DIR, "transcripts")
 
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -39,26 +50,46 @@ os.makedirs(EXTRACTED_AUDIO_DIR, exist_ok=True)
 os.makedirs(TRANSCRIPTS_DIR, exist_ok=True)
 
 # New logging directories for OpenRouter
-OPENROUTER_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_requests")
+if os.environ.get('WEBSITE_SITE_NAME'):  # Running on Azure
+    OPENROUTER_LOG_DIR = os.path.join(TEMP_BASE, "logs", "openrouter_requests")
+    OPENROUTER_ERROR_LOG_DIR = os.path.join(TEMP_BASE, "logs", "openrouter_errors")
+else:  # Running locally
+    OPENROUTER_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_requests")
+    OPENROUTER_ERROR_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_errors")
+    
 os.makedirs(OPENROUTER_LOG_DIR, exist_ok=True)
-
-OPENROUTER_ERROR_LOG_DIR = os.path.join(BASE_DIR, "logs", "openrouter_errors")
 os.makedirs(OPENROUTER_ERROR_LOG_DIR, exist_ok=True)
 
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- AI Model Loading ---
+# --- AI Model Loading -----------------------------------------------------------------------------------------------------------------#
 def load_whisper_model():
     """Loads the Whisper model."""
-    model = whisper.load_model("medium")  # You can change to "base", "medium", or "large" as needed
-    logging.info("Whisper model loaded.")
-    return model
+    try:
+        # Use large model for both Azure and local environments for better accuracy
+        model_size = "large"
+        model = whisper.load_model(model_size)
+        logging.info(f"Whisper model '{model_size}' loaded successfully.")
+        return model
+    except Exception as e:
+        logging.error(f"Failed to load Whisper model: {e}")
+        # Fallback to base model if large model fails
+        try:
+            model = whisper.load_model("base")
+            logging.info("Whisper base model loaded as fallback.")
+            return model
+        except Exception as fallback_error:
+            logging.error(f"Failed to load fallback model: {fallback_error}")
+            raise
 
 # Pre-load models on startup
 WHISPER_MODEL = load_whisper_model()
 
 # --- Helper Functions (The Pipeline) ---
+
+# EXTRACT THE AUDIO USING  FFMPEG ---------------------------------------------------------------------------------------------------------#
+
 
 def extract_audio(video_path, output_audio_path):
     """Extracts audio from a video file."""
@@ -67,7 +98,7 @@ def extract_audio(video_path, output_audio_path):
         (
             ffmpeg
             .input(video_path)
-            .output(output_audio_path, ac=1, ar='16000') # Set audio channels to 1 and sample rate to 16000
+            .output(output_audio_path, ac=1, ar='16000') 
             .overwrite_output()
             .run(quiet=True, capture_stdout=True, capture_stderr=True)
         )
@@ -77,6 +108,8 @@ def extract_audio(video_path, output_audio_path):
         logging.error("ffmpeg error during audio extraction:")
         logging.error(e.stderr.decode('utf8'))
         return False
+    
+# TRANSCRIBE THE AUDIO TO TEXT USING  WHISPER--------------------------------------------------------------------------------------------------#
 
 def transcribe_audio(audio_path, language_code=None):
     """
@@ -117,6 +150,9 @@ def save_transcription(segments, output_path):
     except Exception as e:
         logging.error(f"Error saving transcription file: {e}")
         return False
+
+# TRANSLATE THE TEXT USING  DEEPSEEK R1-------------------------------------------------------------------------------------------------------#
+
 
 def translate_full_transcript_via_openrouter(segments, src_lang, tgt_lang):
     """
@@ -361,5 +397,8 @@ def process_video_route():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Get port from environment variable (Azure sets this automatically)
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = not os.environ.get('WEBSITE_SITE_NAME')  # Disable debug on Azure
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
 

@@ -1,0 +1,24 @@
+# Files to exclude from Docker build context
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+.pytest_cache
+.coverage
+.env
+.vscode
+.idea
+*.log
+*.tmp
+/output/*
+/input/*
+/extracted_audio/*
+/transcripts/*
+/subs/*
+/logs/*
