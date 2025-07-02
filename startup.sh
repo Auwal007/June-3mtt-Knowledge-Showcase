@@ -24,4 +24,5 @@ echo "Directories created and permissions set."
 
 # Start the application
 echo "Starting Flask application..."
-exec "$@"
+# Start the Flask application using Gunicorn
+exec gunicorn --bind 0.0.0.0:8000 --timeout 600 --workers 1 --max-requests 1000 app:app
